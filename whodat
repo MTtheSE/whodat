@@ -1,6 +1,47 @@
 #!/usr/bin/env bash
 
-ip=$(dig "$1" +short|tail -n1);
-operator=$(whois ${ip} | grep --line-buffered OrgName: | awk '{print $2}');
-echo "The IP of" $1 "is" ${ip} "operated by" ${operator};
-whois -h whois.cymru.com " -v ${ip}"
+#set global var to non-flag state
+domain=$1
+verbose=0
+
+#exit if no domain
+if [ $# -eq 0 ]
+  then
+    echo "Domain not provided"
+    exit 1
+fi
+
+#check flag for verbose mode
+while getopts ":v:" opt; do
+  case $opt in
+    v)
+      domain="$OPTARG" >&2
+      verbose=1
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+    :)
+      echo "Option -$OPTARG requires an argument." >&2
+      exit 1
+      ;;
+  esac
+done
+
+#construct data based on input domain
+ip=$(dig ${domain} +short|tail -n1)
+operator=$(whois ${ip} | grep --line-buffered OrgName: | awk '{print $2}')
+bgp=$(whois -h whois.cymru.com " -v ${ip}")
+
+#output based on verbose mode
+if ((${verbose} == 0))
+then
+   echo "The IP of" ${domain} "is" ${ip} "operated by" ${operator}
+elif ((${verbose} == 1))
+then
+   echo $domain " resolves to "${ip}" with BGP information:"
+   whois -h whois.cymru.com " -v ${ip}"
+else
+   echo "Error, try again"
+fi
