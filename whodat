@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+ip=$(dig "$1" +short|tail -n1);
+operator=$(whois ${ip} | grep --line-buffered OrgName: | awk '{print $2}');
+echo "The IP of" $1 "is" ${ip} "operated by" ${operator};
+whois -h whois.cymru.com " -v ${ip}"
