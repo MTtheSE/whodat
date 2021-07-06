@@ -11,6 +11,18 @@ if [ $# -eq 0 ]
     exit 1
 fi
 
+#If an IP, switch to reverse DNS lookup, provide verbose whois and exit
+if [[ ${domain} =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]
+  then
+    revdns=$(dig -x ${domain} +short)
+    if [ ! -z ${revdns} ]
+      then
+      echo "The reverse DNS of this IP is" ${revdns} " with BGP information:"
+    fi
+    whois -h whois.cymru.com " -v ${domain}"
+    exit 1
+fi
+
 #check flag for verbose mode
 while getopts ":v:" opt; do
   case $opt in
@@ -32,7 +44,6 @@ done
 #construct data based on input domain
 ip=$(dig ${domain} +short|tail -n1)
 operator=$(whois ${ip} | grep --line-buffered OrgName: | awk '{print $2}')
-bgp=$(whois -h whois.cymru.com " -v ${ip}")
 
 #output based on verbose mode
 if ((${verbose} == 0))
